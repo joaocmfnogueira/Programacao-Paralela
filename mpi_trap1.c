@@ -39,8 +39,7 @@ double Trap(double left_endpt, double right_endpt, int trap_count,
 double f(double x); 
 
 int main(void) {
-   double time_spent = 0.0;
-   clock_t begin = clock();
+   
    int my_rank, comm_sz, n = 1048576, local_n;   
    double a = 0.0, b = 3.0, h, local_a, local_b;
    double local_int, total_int;
@@ -55,12 +54,17 @@ int main(void) {
    /* Find out how many processes are being used */
    MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
 
+   
    h = (b-a)/n;          /* h is the same for all processes */
    local_n = n/comm_sz;  /* So is the number of trapezoids  */
 
    /* Length of each process' interval of
     * integration = local_n*h.  So my interval
     * starts at: */
+
+   double time_spent = 0.0;
+   clock_t begin = clock();
+   
    local_a = a + my_rank*local_n*h;
    local_b = local_a + local_n*h;
    local_int = Trap(local_a, local_b, local_n, h);
