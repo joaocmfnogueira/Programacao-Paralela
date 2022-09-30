@@ -38,9 +38,12 @@ double Trap(double left_endpt, double right_endpt, int trap_count,
 /* Function we're integrating */
 double f(double x); 
 
+void Get_input(int my_rank, int comm_sz, double* a_p, double* b_p,
+      int* n_p);
+
 int main(void) {
    
-   int my_rank, comm_sz, n = 1048576, local_n;   
+   int my_rank, comm_sz, n = 1048756, local_n;   
    double a = 0.0, b = 3.0, h, local_a, local_b;
    double local_int, total_int;
    int source; 
@@ -54,6 +57,7 @@ int main(void) {
    /* Find out how many processes are being used */
    MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
 
+   //Get_input(my_rank, comm_sz, &a, &b, &n);
    
    h = (b-a)/n;          /* h is the same for all processes */
    local_n = n/comm_sz;  /* So is the number of trapezoids  */
@@ -70,8 +74,23 @@ int main(void) {
    local_int = Trap(local_a, local_b, local_n, h);
 
    /* Add up the integrals calculated by each process */ 
-     MPI_Reduce(&local_int, &total_int, 1, MPI_DOUBLE, MPI_SUM, 0,
-           MPI_COMM_WORLD);
+
+   
+   if (my_rank != 0) { 
+      MPI_Send(&local_int, 1, MPI_DOUBLE, 0, 0, 
+            MPI_COMM_WORLD); 
+   } else {
+      total_int = local_int;
+      for (source = 1; source < comm_sz; source++) {
+         MPI_Recv(&local_int, 1, MPI_DOUBLE, source, 0,
+            MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+         total_int += local_int;
+      }
+   } 
+   
+
+     //MPI_Reduce(&local_int, &total_int, 1, MPI_DOUBLE, MPI_SUM, 0,
+        //   MPI_COMM_WORLD);
 
    /* Print the result */
    if (my_rank == 0) {
@@ -82,7 +101,7 @@ int main(void) {
    time_spent += (double)(end - begin) / CLOCKS_PER_SEC;
    printf("Tempo gasto: %f segundos", time_spent);
    }
-
+   
    /* Shut down MPI */
    MPI_Finalize();
 
@@ -102,6 +121,19 @@ int main(void) {
  *               left_endpt to right_endpt using trap_count
  *               trapezoids
  */
+void Get_input(int my_rank, int comm_sz, double* a_p, double* b_p,
+      int* n_p) {
+
+   if (my_rank == 0) {
+      printf("Enter a, b, and n\n");
+      scanf("%lf %lf %d", a_p, b_p, n_p);
+   } 
+   MPI_Bcast(a_p, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+   MPI_Bcast(b_p, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+   MPI_Bcast(n_p, 1, MPI_INT, 0, MPI_COMM_WORLD);
+}  /* Get_input */
+
+
 double Trap(
       double left_endpt  /* in */, 
       double right_endpt /* in */, 
@@ -128,3 +160,4 @@ double Trap(
 double f(double x) {
    return x*x;
 } /* f */
+
