@@ -7,7 +7,7 @@
  * Output:   Estimate of the integral from a to b of f(x)
  *           using the trapezoidal rule and n trapezoids.
  *
- * Compile:  mpicc -g -Wall -o mpi_trap1 mpi_trap1.c
+ * Compile:  time mpicc -g -o mpi_trap1 mpi_trap1.c
  * Run:      mpiexec -n <number of processes> ./mpi_trap1
  *
  * Algorithm:
@@ -43,7 +43,7 @@ void Get_input(int my_rank, int comm_sz, double* a_p, double* b_p,
 
 int main(void) {
    
-   int my_rank, comm_sz, n = 1048756, local_n;   
+   int my_rank, comm_sz, n = 1048756000, local_n;   
    double a = 0.0, b = 3.0, h, local_a, local_b;
    double local_int, total_int;
    int source; 
